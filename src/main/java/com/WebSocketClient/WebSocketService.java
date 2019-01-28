@@ -1,8 +1,11 @@
 package com.WebSocketClient;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.client.WebSocketClient;
@@ -36,4 +39,27 @@ public class WebSocketService {
         stompClient.connect(URL, sessionHandler);
     }
 
+    public boolean sendMessage(Message message) throws JsonProcessingException {
+        LOGGER.info("WebSocketService sendMessage..");
+
+        String json = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(message);
+
+        StompSession stompSession = MyStompSessionHandler.getStompSession();
+        if (stompSession == null)
+            return false;
+
+        stompSession.send("/app/chat", json);
+        System.out.println("Message Sent");
+        return true;
+    }
+
+    public boolean disconnect() {
+        LOGGER.info("WebSocketService disconnect..");
+        StompSession stompSession = MyStompSessionHandler.getStompSession();
+        if (stompSession == null)
+            return false;
+        MyStompSessionHandler.setStompSession(null);
+        stompSession.disconnect();
+        return true;
+    }
 }
